@@ -117,7 +117,12 @@ export default function Auth({ onLogin, onRegister, primary }) {
               fontSize: 22,
             }}
           >
-            🧵
+           <img src="/logo-b.png" alt="Orvian"
+              style={{ 
+                width: 55, 
+                height: 50, 
+                borderRadius: 14, 
+                objectFit: "contain" }} />
           </div>
           <h1
             style={{
