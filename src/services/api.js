@@ -1,12 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 
-/**
- * Todas las llamadas a Supabase centralizadas aquí.
- * Cada función verifica que supabase no sea null antes de operar.
- */
-
 const notReady = () => {
-  throw new Error("Supabase no configurado. Cargá las variables de entorno.");
+  throw new Error("Supabase no configurado.");
 };
 
 // ── Auth ──────────────────────────────────────────────
@@ -20,7 +15,6 @@ export const authApi = {
     if (error) throw error;
     return data;
   },
-
   async signUp(email, password, name) {
     if (!supabase) notReady();
     const { error } = await supabase.auth.signUp({
@@ -30,12 +24,10 @@ export const authApi = {
     });
     if (error) throw error;
   },
-
   async signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
   },
-
   async getSession() {
     if (!supabase) return null;
     const {
@@ -43,7 +35,6 @@ export const authApi = {
     } = await supabase.auth.getSession();
     return session;
   },
-
   onAuthStateChange(callback) {
     if (!supabase) return { unsubscribe: () => {} };
     const {
@@ -51,7 +42,6 @@ export const authApi = {
     } = supabase.auth.onAuthStateChange(callback);
     return subscription;
   },
-
   async updatePassword(newPassword) {
     if (!supabase) notReady();
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -65,19 +55,19 @@ export const dataApi = {
     if (!supabase) return null;
     const { data, error } = await supabase
       .from("atelier_data")
-      .select("clients,cats,products,cfg")
+      .select("clients,cats,products,cfg,sales")
       .eq("user_id", userId)
       .single();
     if (error && error.code !== "PGRST116") throw error;
     return data;
   },
 
-  async save({ userId, clients, cats, products, cfg }) {
+  async save({ userId, clients, cats, products, cfg, sales }) {
     if (!supabase) return;
     const { error } = await supabase
       .from("atelier_data")
       .upsert(
-        { user_id: userId, clients, cats, products, cfg },
+        { user_id: userId, clients, cats, products, cfg, sales: sales || [] },
         { onConflict: "user_id" }
       );
     if (error) throw error;

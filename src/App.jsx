@@ -9,11 +9,6 @@ import Login from "./pages/Login.jsx";
 import { DEFAULT_CFG, DEFAULT_CATS } from "./utils/constants.js";
 import "./styles/globals.css";
 
-/**
- * App.jsx — raíz de la aplicación.
- * Si Supabase no está configurado (env vars faltantes),
- * muestra un aviso amigable en lugar de romper.
- */
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [toast, setToast] = useState("");
@@ -26,7 +21,7 @@ export default function App() {
 
   const { user, loading, login, register, logout, updatePassword } = useAuth();
   const clientsHook = useClients([], null, doToast);
-  const ordersHook = useOrders(DEFAULT_CATS, [], doToast);
+  const ordersHook = useOrders(DEFAULT_CATS, [], doToast, []);
   const setProductsRef = ordersHook.setProducts;
 
   const loadData = async (userId) => {
@@ -37,18 +32,26 @@ export default function App() {
         if (data.cats) ordersHook.hydrateCats(data.cats);
         if (data.products) ordersHook.hydrateProducts(data.products);
         if (data.cfg) setCfg(data.cfg);
+        if (data.sales) ordersHook.hydrateSales(data.sales);
       }
     } catch (err) {
       console.error("Error cargando datos:", err);
     }
   };
 
-  const saveAll = (clients, cats, products, cfgData, userId) => {
+  const saveAll = (clients, cats, products, cfgData, sales, userId) => {
     if (!userId) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await dataApi.save({ userId, clients, cats, products, cfg: cfgData });
+        await dataApi.save({
+          userId,
+          clients,
+          cats,
+          products,
+          cfg: cfgData,
+          sales,
+        });
       } catch (err) {
         console.error("Error guardando:", err);
       }
@@ -56,16 +59,22 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user)
       saveAll(
         clientsHook.clients,
         ordersHook.cats,
         ordersHook.products,
         cfg,
+        ordersHook.sales,
         user.id
       );
-    }
-  }, [clientsHook.clients, ordersHook.cats, ordersHook.products, cfg]);
+  }, [
+    clientsHook.clients,
+    ordersHook.cats,
+    ordersHook.products,
+    cfg,
+    ordersHook.sales,
+  ]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
@@ -79,10 +88,11 @@ export default function App() {
     clientsHook.hydrateClients([]);
     ordersHook.hydrateCats(DEFAULT_CATS);
     ordersHook.hydrateProducts([]);
+    ordersHook.hydrateSales([]);
     setCfg(DEFAULT_CFG);
   };
 
-  // ── Pantalla: Supabase no configurado ────────────────
+  // ── Supabase no configurado ──────────────────────────
   if (!supabaseReady) {
     return (
       <div
@@ -92,7 +102,7 @@ export default function App() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'DM Sans',sans-serif",
           padding: 24,
         }}
       >
@@ -129,15 +139,15 @@ export default function App() {
               lineHeight: 1.6,
             }}
           >
-            Para usar el dashboard necesitás configurar las variables de entorno
-            de Supabase.
+            Necesitás configurar las variables de entorno para usar el
+            dashboard.
           </p>
           <div
             style={{
               background: "rgba(0,0,0,.3)",
               borderRadius: 10,
               padding: "16px 20px",
-              marginBottom: 20,
+              marginBottom: 16,
             }}
           >
             <p
@@ -228,9 +238,13 @@ export default function App() {
               }}
             >
               Entrá a <strong style={{ color: "#F0EDF8" }}>supabase.com</strong>{" "}
-              → tu proyecto → Settings → API. Copiá el{" "}
-              <strong style={{ color: "#F0EDF8" }}>Project URL</strong> y la
-              clave <strong style={{ color: "#F0EDF8" }}>anon public</strong>.
+              → tu proyecto → Settings → API.
+              <br />
+              Copiá el <strong style={{ color: "#F0EDF8" }}>
+                Project URL
+              </strong>{" "}
+              y la clave{" "}
+              <strong style={{ color: "#F0EDF8" }}>anon public</strong>.
             </p>
           </div>
         </div>
@@ -238,7 +252,6 @@ export default function App() {
     );
   }
 
-  // ── Pantalla de carga ────────────────────────────────
   if (loading) {
     return (
       <div
@@ -263,12 +276,8 @@ export default function App() {
     );
   }
 
-  // ── Login ────────────────────────────────────────────
-  if (!user) {
-    return <Login onLogin={handleLogin} onRegister={register} />;
-  }
+  if (!user) return <Login onLogin={handleLogin} onRegister={register} />;
 
-  // ── App principal ────────────────────────────────────
   return (
     <Home
       user={user}
@@ -278,6 +287,7 @@ export default function App() {
       cats={ordersHook.cats}
       products={ordersHook.products}
       setProducts={setProductsRef}
+      sales={ordersHook.sales}
       toast={toast}
       doToast={doToast}
       onSaveClient={clientsHook.saveClient}
@@ -312,6 +322,8 @@ export default function App() {
       onSaveExpense={ordersHook.saveExpense}
       onUpdateExpense={ordersHook.updateExpense}
       onDeleteExpense={ordersHook.deleteExpense}
+      onSaveSale={ordersHook.saveSale}
+      onDeleteSale={ordersHook.deleteSale}
       onLogout={handleLogout}
       onUpdatePassword={updatePassword}
     />

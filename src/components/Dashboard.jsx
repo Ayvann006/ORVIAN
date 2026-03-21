@@ -17,6 +17,7 @@ export default function Dashboard({
   clients,
   cats,
   products,
+  sales = [],
   cfg,
   rate,
   search,
@@ -87,6 +88,12 @@ export default function Dashboard({
   const lowStock = products.filter(
     (x) => x.minStock > 0 && x.stock <= x.minStock
   );
+
+  // Ventas directas — resumen
+  const totalSales = sales.reduce((s, x) => s + x.total, 0);
+  const recentSales = [...sales]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
 
   return (
     <div
@@ -286,7 +293,80 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* Gráfico mensual — 3 áreas (igual al original) */}
+      {/* ── VENTAS DIRECTAS — resumen ── */}
+      {sales.length > 0 && (
+        <div
+          className="card"
+          style={{ border: `1.5px solid ${sc}44`, background: `${sc}08` }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <h3
+              style={{
+                fontFamily: "'Outfit',sans-serif",
+                fontSize: 15,
+                color: "#2C1810",
+              }}
+            >
+              🛒 Ventas directas
+            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: sc,
+                  fontFamily: "'Outfit',sans-serif",
+                }}
+              >
+                {fmt(totalSales)}
+              </span>
+              <button
+                className="btn-g"
+                style={{ fontSize: 11, padding: "4px 10px" }}
+                onClick={() => onTabChange("ventas")}
+              >
+                Ver todas
+              </button>
+            </div>
+          </div>
+          {recentSales.map((sale) => (
+            <div
+              key={sale.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "6px 9px",
+                borderRadius: 8,
+                background: "#fff",
+                border: "1px solid #F0EBE3",
+                marginBottom: 5,
+              }}
+            >
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#2C1810" }}>
+                  {sale.productName}
+                </p>
+                <p style={{ fontSize: 10, color: "#8B7355" }}>
+                  {sale.qty} {sale.unit} · {fmtDate(sale.date)}
+                </p>
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: sc }}>
+                {fmt(sale.total)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Gráfico mensual */}
       <div className="card">
         <h3
           style={{
@@ -335,8 +415,8 @@ export default function Dashboard({
                 n === "ingresosARS"
                   ? "🇦🇷 ARS"
                   : n === "ingresosUSD"
-                  ? "USD→ARS"
-                  : "Gastos",
+                  ? "💵 USD→ARS"
+                  : "📋 Gastos",
               ]}
               contentStyle={{
                 fontFamily: "DM Sans",
@@ -350,8 +430,8 @@ export default function Dashboard({
                 v === "ingresosARS"
                   ? "🇦🇷 Ingresos ARS"
                   : v === "ingresosUSD"
-                  ? "Ingresos USD (en ARS)"
-                  : "Gastos"
+                  ? "💵 Ingresos USD (en ARS)"
+                  : "📋 Gastos"
               }
             />
             <Area
@@ -556,7 +636,7 @@ export default function Dashboard({
             clients.map((c) => {
               const paid = cliPaidARS(c, rate);
               const debt = cliDebtARS(c, rate);
-              const total = cliPaidARS(c, rate) + cliDebtARS(c, rate);
+              const total = paid + debt;
               const pct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
               return (
                 <div
