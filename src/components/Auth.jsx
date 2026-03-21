@@ -24,9 +24,7 @@ export default function Auth({ onLogin, onRegister, primary }) {
     setErr("");
     try {
       await onRegister(name, email, pass);
-      setInfo(
-        "Cuenta creada. Ya puedes iniciar sesión"
-      );
+      setInfo("Cuenta creada. Ya puedes iniciar sesión");
       setMode("login");
       setPass("");
       setPass2("");
@@ -117,12 +115,16 @@ export default function Auth({ onLogin, onRegister, primary }) {
               fontSize: 22,
             }}
           >
-           <img src="/logo-b.png" alt="Orvian"
-              style={{ 
-                width: 55, 
-                height: 50, 
-                borderRadius: 14, 
-                objectFit: "contain" }} />
+            <img
+              src="/logo-b.png"
+              alt="Orvian"
+              style={{
+                width: 55,
+                height: 50,
+                borderRadius: 14,
+                objectFit: "contain",
+              }}
+            />
           </div>
           <h1
             style={{
