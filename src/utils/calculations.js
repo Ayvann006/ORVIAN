@@ -30,7 +30,9 @@ export const cliTotalARS = (c, rate) =>
   (c.orders || []).reduce((s, o) => s + orderTotalARS(o, rate), 0);
 
 // ─── Métricas globales ────────────────────────────────
-export const calcMetrics = ({ clients, cats, rate }) => {
+// sales = ventas directas (siempre ARS, se suman a incomeARS y al gráfico mensual)
+export const calcMetrics = ({ clients, cats, rate, sales = [] }) => {
+  // Pagos de pedidos de clientes
   const allPays = clients.flatMap((c) =>
     (c.orders || []).flatMap((o) =>
       (o.payments || []).map((pay) => ({
@@ -42,13 +44,20 @@ export const calcMetrics = ({ clients, cats, rate }) => {
     )
   );
 
-  const incomeARS = allPays
+  // Ingresos de pedidos
+  const incomeARSPedidos = allPays
     .filter((x) => x.currency === "ARS")
     .reduce((s, x) => s + x.amount, 0);
   const incomeUSD = allPays
     .filter((x) => x.currency === "USD")
     .reduce((s, x) => s + x.amount, 0);
   const incomeUSDinARS = incomeUSD * rate;
+
+  // Ingresos de ventas directas (siempre ARS)
+  const incomeARSVentas = (sales || []).reduce((s, x) => s + x.total, 0);
+
+  // Totales combinados
+  const incomeARS = incomeARSPedidos + incomeARSVentas;
   const totalIncome = incomeARS + incomeUSDinARS;
 
   const totalExpenses = cats.reduce(
@@ -76,16 +85,25 @@ export const calcMetrics = ({ clients, cats, rate }) => {
 
   const profit = totalIncome - totalExpenses;
 
+  // Por método — suma pagos de pedidos Y ventas directas
   const byMethod = (() => {
     const m = {
       efectivo: { ars: 0, usd: 0 },
       transferencia: { ars: 0, usd: 0 },
       tarjeta: { ars: 0, usd: 0 },
     };
+
+    // Pagos de pedidos
     allPays.forEach((x) => {
       if (x.currency === "USD") m[x.method].usd += x.amount;
       else m[x.method].ars += x.amount;
     });
+
+    // Ventas directas (siempre ARS)
+    (sales || []).forEach((x) => {
+      if (m[x.method]) m[x.method].ars += x.total;
+    });
+
     return Object.entries(m).map(([k, v]) => ({
       name: PAY_LABELS[k],
       ars: v.ars,
@@ -95,6 +113,7 @@ export const calcMetrics = ({ clients, cats, rate }) => {
     }));
   })();
 
+  // Evolución mensual — suma ventas directas a ingresosARS del mes correspondiente
   const monthly = (() => {
     const d = MONTHS.map((m) => ({
       month: m,
@@ -102,17 +121,29 @@ export const calcMetrics = ({ clients, cats, rate }) => {
       ingresosUSD: 0,
       gastos: 0,
     }));
+
+    // Pagos de pedidos
     allPays.forEach((x) => {
       if (!x.date) return;
       const mi = parseInt(x.date.split("-")[1]) - 1;
       if (x.currency === "USD") d[mi].ingresosUSD += x.amount * rate;
       else d[mi].ingresosARS += x.amount;
     });
+
+    // Ventas directas → suman a ingresosARS del mes
+    (sales || []).forEach((x) => {
+      if (!x.date) return;
+      const mi = parseInt(x.date.split("-")[1]) - 1;
+      d[mi].ingresosARS += x.total;
+    });
+
+    // Gastos
     cats.forEach((cat) =>
       cat.items.forEach((e) => {
         if (e.date) d[parseInt(e.date.split("-")[1]) - 1].gastos += e.amount;
       })
     );
+
     return d.map((x) => ({
       ...x,
       ingresosTotalARS: x.ingresosARS + x.ingresosUSD,
@@ -132,6 +163,8 @@ export const calcMetrics = ({ clients, cats, rate }) => {
   return {
     allPays,
     incomeARS,
+    incomeARSPedidos,
+    incomeARSVentas,
     incomeUSD,
     incomeUSDinARS,
     totalIncome,
@@ -146,11 +179,12 @@ export const calcMetrics = ({ clients, cats, rate }) => {
   };
 };
 
-// ─── Exportar CSV ─────────────────────────────────────
-export const exportCSV = (clients, cats) => {
+// ─── Exportar CSV (incluye ventas directas) ───────────
+export const exportCSV = (clients, cats, sales = []) => {
   const rows = [];
   rows.push(["REPORTE — " + new Date().toLocaleDateString("es-AR")]);
   rows.push([]);
+
   rows.push(["CLIENTES Y PEDIDOS"]);
   rows.push([
     "Cliente",
@@ -178,8 +212,9 @@ export const exportCSV = (clients, cats) => {
       ]);
     })
   );
+
   rows.push([]);
-  rows.push(["PAGOS"]);
+  rows.push(["PAGOS DE PEDIDOS"]);
   rows.push(["Fecha", "Cliente", "Pedido", "Monto", "Método", "Nota"]);
   clients.forEach((c) =>
     (c.orders || []).forEach((o) =>
@@ -195,6 +230,34 @@ export const exportCSV = (clients, cats) => {
       )
     )
   );
+
+  if (sales.length > 0) {
+    rows.push([]);
+    rows.push(["VENTAS DIRECTAS"]);
+    rows.push([
+      "Fecha",
+      "Producto",
+      "Cantidad",
+      "Unidad",
+      "Precio Unit.",
+      "Total",
+      "Método",
+      "Nota",
+    ]);
+    sales.forEach((s) =>
+      rows.push([
+        fmtDate(s.date),
+        s.productName,
+        s.qty,
+        s.unit,
+        s.price,
+        s.total,
+        PAY_LABELS[s.method],
+        s.note || "",
+      ])
+    );
+  }
+
   rows.push([]);
   rows.push(["GASTOS"]);
   rows.push(["Fecha", "Categoría", "Descripción", "Monto"]);

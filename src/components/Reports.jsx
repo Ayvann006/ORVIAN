@@ -16,17 +16,16 @@ import { calcMetrics, cliPaidARS, cliDebtARS } from "../utils/calculations.js";
 import { fmt, fmtUSD } from "../utils/format.js";
 import { exportCSV } from "../utils/calculations.js";
 
-/**
- * Tab "Reportes" — tabla anual, gráfico de barras, gastos por categoría,
- * resumen por cliente. Idéntico al original.
- */
-export default function Reports({ clients, cats, cfg, rate }) {
+export default function Reports({ clients, cats, sales = [], cfg, rate }) {
   const p = cfg.primaryColor;
   const a = cfg.accentColor;
   const sc = cfg.successColor;
 
+  // ── Métricas con ventas incluidas ─────────────────────
   const {
     incomeARS,
+    incomeARSPedidos,
+    incomeARSVentas,
     incomeUSD,
     incomeUSDinARS,
     totalIncome,
@@ -35,8 +34,8 @@ export default function Reports({ clients, cats, cfg, rate }) {
     monthly,
     expBreak,
   } = useMemo(
-    () => calcMetrics({ clients, cats, rate }),
-    [clients, cats, rate]
+    () => calcMetrics({ clients, cats, rate, sales }),
+    [clients, cats, rate, sales]
   );
 
   return (
@@ -48,24 +47,100 @@ export default function Reports({ clients, cats, cfg, rate }) {
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           className="btn-g"
-          onClick={() => exportCSV(clients, cats)}
+          onClick={() => exportCSV(clients, cats, sales)}
           style={{ fontSize: 12 }}
         >
           Exportar CSV/Excel
         </button>
       </div>
 
-      {/* Gráfico barras anual */}
+      {/* Desglose de ingresos */}
+      {incomeARSVentas > 0 && (
+        <div
+          className="card"
+          style={{ border: `1.5px solid ${sc}44`, background: `${sc}08` }}
+        >
+          <h3
+            style={{
+              fontFamily: "'Outfit',sans-serif",
+              fontSize: 14,
+              marginBottom: 10,
+            }}
+          >
+            Desglose de ingresos ARS
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: 10,
+            }}
+          >
+            {[
+              {
+                label: "Pedidos de clientes",
+                value: incomeARSPedidos,
+                color: p,
+              },
+              {
+                label: "Ventas directas 🛒",
+                value: incomeARSVentas,
+                color: sc,
+              },
+              { label: "Total ARS", value: incomeARS, color: "#2C1810" },
+            ].map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  textAlign: "center",
+                  padding: "10px 8px",
+                  borderRadius: 10,
+                  background: "#fff",
+                  border: "1px solid #F0EBE3",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 600,
+                    color: "#8B7355",
+                    textTransform: "uppercase",
+                    letterSpacing: ".6px",
+                    marginBottom: 5,
+                  }}
+                >
+                  {item.label}
+                </p>
+                <p
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: item.color,
+                    fontFamily: "'Outfit',sans-serif",
+                  }}
+                >
+                  {fmt(item.value)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gráfico barras anual — ya incluye ventas */}
       <div className="card">
         <h3
           style={{
             fontFamily: "'Outfit',sans-serif",
             fontSize: 15,
-            marginBottom: 12,
+            marginBottom: 4,
           }}
         >
           Ingresos · Gastos · Ganancia
         </h3>
+        <p style={{ fontSize: 10, color: "#8B7355", marginBottom: 12 }}>
+          Los ingresos ARS incluyen pedidos + ventas directas
+        </p>
         <ResponsiveContainer width="100%" height={195}>
           <BarChart data={monthly} barGap={3}>
             <CartesianGrid
@@ -394,7 +469,6 @@ export default function Reports({ clients, cats, cfg, rate }) {
                     </td>
                   </tr>
                 ))}
-              {/* Fila de totales */}
               <tr
                 style={{
                   borderTop: "2px solid #E8DDD0",
@@ -412,6 +486,18 @@ export default function Reports({ clients, cats, cfg, rate }) {
                   }}
                 >
                   {fmt(incomeARS)}
+                  {incomeARSVentas > 0 && (
+                    <span
+                      style={{
+                        fontSize: 8,
+                        color: "#8B7355",
+                        display: "block",
+                        fontWeight: 400,
+                      }}
+                    >
+                      🛒 {fmt(incomeARSVentas)} ventas
+                    </span>
+                  )}
                 </td>
                 <td
                   style={{
@@ -428,6 +514,7 @@ export default function Reports({ clients, cats, cfg, rate }) {
                         fontSize: 8,
                         color: "#8B7355",
                         display: "block",
+                        fontWeight: 400,
                       }}
                     >
                       {fmtUSD(incomeUSD)}

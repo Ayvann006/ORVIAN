@@ -27,27 +27,28 @@ export default function Dashboard({
   const p = cfg.primaryColor;
   const sc = cfg.successColor;
 
+  // ── Métricas — sales incluidas ────────────────────────
   const {
     allPays,
     incomeARS,
+    incomeARSPedidos,
+    incomeARSVentas,
     incomeUSD,
     incomeUSDinARS,
     totalIncome,
     totalExpenses,
-    debtARS,
-    debtUSD,
     totalDebt,
     profit,
     byMethod,
     monthly,
   } = useMemo(
-    () => calcMetrics({ clients, cats, rate }),
-    [clients, cats, rate]
+    () => calcMetrics({ clients, cats, rate, sales }),
+    [clients, cats, rate, sales]
   );
 
   const today = todayStr();
 
-  // Alertas entregas próximas/vencidas
+  // Alertas entregas
   const dueAlerts = useMemo(
     () =>
       clients
@@ -88,9 +89,6 @@ export default function Dashboard({
   const lowStock = products.filter(
     (x) => x.minStock > 0 && x.stock <= x.minStock
   );
-
-  // Ventas directas — resumen
-  const totalSales = sales.reduce((s, x) => s + x.total, 0);
   const recentSales = [...sales]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
@@ -293,7 +291,7 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ── VENTAS DIRECTAS — resumen ── */}
+      {/* Ventas directas recientes */}
       {sales.length > 0 && (
         <div
           className="card"
@@ -307,15 +305,22 @@ export default function Dashboard({
               marginBottom: 10,
             }}
           >
-            <h3
-              style={{
-                fontFamily: "'Outfit',sans-serif",
-                fontSize: 15,
-                color: "#2C1810",
-              }}
-            >
-              🛒 Ventas directas
-            </h3>
+            <div>
+              <h3
+                style={{
+                  fontFamily: "'Outfit',sans-serif",
+                  fontSize: 15,
+                  color: "#2C1810",
+                }}
+              >
+                🛒 Ventas directas
+              </h3>
+              {incomeARSVentas > 0 && (
+                <p style={{ fontSize: 10, color: "#8B7355", marginTop: 2 }}>
+                  Incluidas en el total de ingresos
+                </p>
+              )}
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span
                 style={{
@@ -325,7 +330,7 @@ export default function Dashboard({
                   fontFamily: "'Outfit',sans-serif",
                 }}
               >
-                {fmt(totalSales)}
+                {fmt(incomeARSVentas)}
               </span>
               <button
                 className="btn-g"
@@ -366,7 +371,7 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* Gráfico mensual */}
+      {/* Gráfico mensual — ya incluye ventas directas en ingresosARS */}
       <div className="card">
         <h3
           style={{
@@ -378,7 +383,7 @@ export default function Dashboard({
           Evolución Mensual
         </h3>
         <p style={{ fontSize: 10, color: "#8B7355", marginBottom: 12 }}>
-          Ingresos en ARS y USD convertidos · Gastos en ARS
+          Ingresos (pedidos + ventas directas) · Gastos en ARS
         </p>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={monthly}>
@@ -413,7 +418,7 @@ export default function Dashboard({
               formatter={(v, n) => [
                 fmt(v),
                 n === "ingresosARS"
-                  ? "🇦🇷 ARS"
+                  ? "🇦🇷 ARS (pedidos + ventas)"
                   : n === "ingresosUSD"
                   ? "💵 USD→ARS"
                   : "📋 Gastos",
@@ -428,9 +433,9 @@ export default function Dashboard({
             <Legend
               formatter={(v) =>
                 v === "ingresosARS"
-                  ? "🇦🇷 Ingresos ARS"
+                  ? "🇦🇷 ARS (pedidos + ventas)"
                   : v === "ingresosUSD"
-                  ? "💵 Ingresos USD (en ARS)"
+                  ? "💵 USD→ARS"
                   : "📋 Gastos"
               }
             />
@@ -512,6 +517,9 @@ export default function Dashboard({
           >
             Por Método
           </h3>
+          <p style={{ fontSize: 9, color: "#8B7355", marginBottom: 8 }}>
+            Pedidos + ventas directas
+          </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {byMethod
               .filter((m) => m.ars > 0 || m.usd > 0)
