@@ -3,11 +3,11 @@ import Dashboard from "../components/Dashboard.jsx";
 import Clients from "../components/Clients.jsx";
 import Inventory from "../components/Inventory.jsx";
 import Expenses from "../components/Expenses.jsx";
-import Payments from "../components/Payments.jsx";
 import Invoice from "../components/Invoice.jsx";
 import Reports from "../components/Reports.jsx";
 import Sales from "../components/Sales.jsx";
 import Settings from "../components/Settings.jsx";
+import { Modal } from "../components/Modals.jsx";
 import { dolarApi } from "../services/api.js";
 import { exportCSV } from "../utils/calculations.js";
 import { fmt } from "../utils/format.js";
@@ -57,6 +57,7 @@ export default function Home({
   const [selClient, setSelClient] = useState(null);
   const [search, setSearch] = useState("");
   const [showCfg, setShowCfg] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
   const [dolar, setDolar] = useState({
     blue: 0,
     oficial: 0,
@@ -89,6 +90,7 @@ export default function Home({
   const handleInvPrinted = () =>
     setCfg((prev) => ({ ...prev, nextInvNum: (prev.nextInvNum || 1) + 1 }));
 
+  // Tabs — sin "Pagos"
   const TABS = [
     { key: "resumen", label: "Resumen" },
     { key: "clientes", label: "Clientes" },
@@ -99,7 +101,7 @@ export default function Home({
     { key: "reportes", label: "Reportes" },
   ];
 
-  // KPIs — ventas directas incluidas en ingresos ARS
+  // KPIs
   const salesTotal = (sales || []).reduce((s, x) => s + x.total, 0);
   const incomeARS =
     clients
@@ -215,11 +217,13 @@ export default function Home({
             })}
           </p>
         </div>
+
+        {/* Buscador */}
         <div style={{ flex: "1 1 180px", maxWidth: 260 }}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar cliente, pedido, producto..."
+            placeholder="Buscar cliente, servicio, producto..."
             style={{
               width: "100%",
               background: "rgba(255,255,255,.07)",
@@ -233,6 +237,8 @@ export default function Home({
             }}
           />
         </div>
+
+        {/* Cotización dólar */}
         <div
           title="Clic para actualizar"
           onClick={fetchDolar}
@@ -297,6 +303,8 @@ export default function Home({
             )}
           </div>
         </div>
+
+        {/* Acciones */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button
             className="btn-p"
@@ -338,8 +346,9 @@ export default function Home({
           >
             Config
           </button>
+          {/* Logout con confirmación */}
           <button
-            onClick={onLogout}
+            onClick={() => setShowLogout(true)}
             style={{
               background: "rgba(255,255,255,.07)",
               border: "1px solid rgba(180,170,200,.18)",
@@ -599,7 +608,7 @@ export default function Home({
             }}
           >
             <p style={{ fontSize: 9, color: "#8B7355", marginBottom: 2 }}>
-              Ingreso−Gasto ARS
+              Ingreso − Gasto ARS
             </p>
             <p
               style={{
@@ -842,6 +851,7 @@ export default function Home({
         )}
       </div>
 
+      {/* Settings */}
       {showCfg && (
         <Settings
           cfg={cfg}
@@ -854,6 +864,28 @@ export default function Home({
           }}
           onClose={() => setShowCfg(false)}
         />
+      )}
+
+      {/* Confirmación logout */}
+      {showLogout && (
+        <Modal title="¿Cerrar sesión?" onClose={() => setShowLogout(false)}>
+          <p style={{ fontSize: 13, color: "#4A3728", marginBottom: 6 }}>
+            Tus datos están guardados en la nube. Podés volver a entrar cuando
+            quieras.
+          </p>
+          <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+            <button
+              className="btn-g"
+              style={{ flex: 1 }}
+              onClick={() => setShowLogout(false)}
+            >
+              Cancelar
+            </button>
+            <button className="btn-p" style={{ flex: 1 }} onClick={onLogout}>
+              Salir
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

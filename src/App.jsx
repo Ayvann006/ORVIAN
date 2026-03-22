@@ -160,7 +160,7 @@ export default function App() {
                 letterSpacing: ".7px",
               }}
             >
-              En CodeSandbox:
+              En CodeSandbox / StackBlitz:
             </p>
             <ol
               style={{
@@ -171,13 +171,10 @@ export default function App() {
               }}
             >
               <li>
-                Click en el ícono{" "}
-                <strong style={{ color: "#F0EDF8" }}>⚙️</strong> del panel
-                izquierdo
-              </li>
-              <li>
-                Seleccioná{" "}
-                <strong style={{ color: "#F0EDF8" }}>"Env Variables"</strong>
+                Buscá el panel de{" "}
+                <strong style={{ color: "#F0EDF8" }}>
+                  Variables de entorno / Secrets
+                </strong>
               </li>
               <li>
                 Agregá{" "}
@@ -205,10 +202,7 @@ export default function App() {
                   VITE_SUPABASE_KEY
                 </code>
               </li>
-              <li>
-                Hacé click en{" "}
-                <strong style={{ color: "#F0EDF8" }}>"Restart Sandbox"</strong>
-              </li>
+              <li>Reiniciá el servidor</li>
             </ol>
           </div>
           <div
@@ -237,14 +231,10 @@ export default function App() {
                 lineHeight: 1.7,
               }}
             >
-              Entrá a <strong style={{ color: "#F0EDF8" }}>supabase.com</strong>{" "}
-              → tu proyecto → Settings → API.
-              <br />
-              Copiá el <strong style={{ color: "#F0EDF8" }}>
-                Project URL
-              </strong>{" "}
-              y la clave{" "}
-              <strong style={{ color: "#F0EDF8" }}>anon public</strong>.
+              <strong style={{ color: "#F0EDF8" }}>supabase.com</strong> → tu
+              proyecto → Settings → API → copiá el{" "}
+              <strong style={{ color: "#F0EDF8" }}>Project URL</strong> y la
+              clave <strong style={{ color: "#F0EDF8" }}>anon public</strong>.
             </p>
           </div>
         </div>

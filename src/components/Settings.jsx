@@ -2,10 +2,6 @@ import { useState } from "react";
 import { Modal, ModalButtons, SecTitle } from "./Modals.jsx";
 import { THEMES } from "../utils/constants.js";
 
-/**
- * Modal de configuración del negocio.
- * Permite cambiar nombre, dirección, colores y contraseña.
- */
 export default function Settings({
   cfg,
   user,
@@ -122,7 +118,7 @@ export default function Settings({
           ))}
         </div>
 
-        {/* Tema de color */}
+        {/* Colores */}
         <SecTitle>Paleta de colores</SecTitle>
         <div
           style={{
@@ -182,8 +178,6 @@ export default function Settings({
             </label>
           ))}
         </div>
-
-        {/* Colores manuales */}
         <div
           style={{
             display: "grid",
@@ -210,7 +204,7 @@ export default function Settings({
           ))}
         </div>
 
-        {/* Tipo de dólar */}
+        {/* Dólar */}
         <SecTitle>Cotización dólar</SecTitle>
         <div style={{ marginBottom: 16 }}>
           <label className="lbl">Dólar a usar para conversiones</label>
@@ -275,7 +269,7 @@ export default function Settings({
           </button>
         </div>
 
-        {/* Guardar / Cancelar */}
+        {/* Guardar */}
         <div style={{ display: "flex", gap: 9 }}>
           <button className="btn-g" style={{ flex: 1 }} onClick={onClose}>
             Cancelar
