@@ -39,10 +39,7 @@ export const CLI_COLORS = [
 
 // ─── Opciones de íconos / colores para categorías ────
 export const ICON_OPTS = [
-  "🧵",
   "📦",
-  "🪡",
-  "✂️",
   "⭐",
   "💡",
   "🔧",
@@ -59,6 +56,9 @@ export const ICON_OPTS = [
   "✈️",
   "🎭",
   "💻",
+  "🧵",
+  "🪡",
+  "✂️",
 ];
 export const COL_OPTS = [
   "#C8956C",
@@ -74,21 +74,23 @@ export const COL_OPTS = [
 ];
 export const STOCK_UNITS = [
   "unidades",
-  "metros",
+  "horas",
   "kg",
+  "metros",
+  "litros",
   "rollos",
   "pares",
   "sets",
   "cajas",
-  "litros",
+  "servicios",
 ];
 
-// ─── Estados de pedido ────────────────────────────────
+// ─── Estados del servicio ─────────────────────────────
 export const ORDER_STAGES = [
-  { key: "medidas", label: "Toma de medidas", color: "#7AA8C4" },
-  { key: "confeccion", label: "En confección", color: "#C8956C" },
-  { key: "listo", label: "Listo", color: "#8B6F9E" },
-  { key: "entregado", label: "Entregado", color: "#6B9E8B" },
+  { key: "presupuestado", label: "Presupuestado", color: "#7AA8C4" },
+  { key: "en_proceso", label: "En proceso", color: "#C8956C" },
+  { key: "terminado", label: "Terminado", color: "#8B6F9E" },
+  { key: "cobrado", label: "Cobrado", color: "#6B9E8B" },
 ];
 
 // ─── Configuración por defecto ────────────────────────
@@ -104,33 +106,27 @@ export const DEFAULT_CFG = {
   nextInvNum: 1,
 };
 
-// ─── Categorías de gastos por defecto ─────────────────
+// ─── Categorías de gasto por defecto ─────────────────
 export const DEFAULT_CATS = [
-  { id: "telas", name: "Telas", icon: "🧵", color: "#C8956C", items: [] },
   {
     id: "materiales",
     name: "Materiales",
     icon: "📦",
-    color: "#8B6F9E",
+    color: "#C8956C",
     items: [],
   },
+  { id: "insumos", name: "Insumos", icon: "⭐", color: "#8B6F9E", items: [] },
   {
-    id: "bordadora",
-    name: "Bordadora",
-    icon: "🪡",
+    id: "servicios",
+    name: "Servicios",
+    icon: "🔧",
     color: "#E8A87C",
     items: [],
   },
-  {
-    id: "costurera",
-    name: "Costurera",
-    icon: "✂️",
-    color: "#6B9E8B",
-    items: [],
-  },
+  { id: "otros", name: "Otros", icon: "📋", color: "#6B9E8B", items: [] },
 ];
 
-// ─── Formularios vacíos (estado inicial) ─────────────
+// ─── Formularios vacíos ───────────────────────────────
 export const EMPTY_CLIENT = {
   name: "",
   phone: "",
@@ -143,7 +139,7 @@ export const EMPTY_ORDER = {
   total: "",
   notes: "",
   currency: "ARS",
-  status: "medidas",
+  status: "presupuestado",
   dueDate: "",
   installments: "",
   costEstimate: "",
@@ -170,6 +166,14 @@ export const EMPTY_PRODUCT = {
   minStock: "",
 };
 export const EMPTY_CUSTOM_ITEM = { name: "", notes: "", price: "" };
+export const EMPTY_SALE = {
+  date: new Date().toISOString().split("T")[0],
+  productId: "",
+  qty: "1",
+  price: "",
+  method: "efectivo",
+  note: "",
+};
 
 // ─── Temas de color predefinidos ─────────────────────
 export const THEMES = [
@@ -180,13 +184,3 @@ export const THEMES = [
   { name: "Índigo", p: "#4A6B8A", a: "#C8956C" },
   { name: "Rosa antiguo", p: "#C47A8A", a: "#8B6F9E" },
 ];
-
-// ─── Formulario vacío de venta directa ───────────────
-export const EMPTY_SALE = {
-  date: new Date().toISOString().split("T")[0],
-  productId: "",
-  qty: "1",
-  price: "",
-  method: "efectivo",
-  note: "",
-};
