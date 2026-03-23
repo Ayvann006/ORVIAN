@@ -21,10 +21,6 @@ import {
 } from "../utils/calculations.js";
 import { PAY_COLORS, PAY_LABELS } from "../utils/constants.js";
 
-/**
- * Tab "Clientes" — master/detail idéntico al original.
- * Lista → click → detalle del cliente con todos sus pedidos expandidos.
- */
 export default function Clients({
   clients,
   products,
@@ -53,7 +49,6 @@ export default function Clients({
   const a = cfg.accentColor;
   const sc = cfg.successColor;
 
-  // Modals
   const [addClient, setAddClient] = useState(false);
   const [editCli, setEditCli] = useState(null);
   const [addOrder, setAddOrder] = useState(null);
@@ -66,7 +61,6 @@ export default function Clients({
   const [removeUsed, setRemoveUsed] = useState(null);
   const [editNote, setEditNote] = useState(null);
 
-  // Forms
   const [fCli, setFCli] = useState(EMPTY_CLIENT);
   const [fECli, setFECli] = useState(EMPTY_CLIENT);
   const [fOrd, setFOrd] = useState(EMPTY_ORDER);
@@ -79,7 +73,7 @@ export default function Clients({
 
   return (
     <div className="fi">
-      {/* ── VISTA LISTA ── */}
+      {/* ── LISTA ── */}
       {selClient === null ? (
         <div>
           <div
@@ -91,7 +85,7 @@ export default function Clients({
             }}
           >
             <p style={{ color: "#8B7355", fontSize: 13 }}>
-              {clients.length} clientas
+              {clients.length} cliente{clients.length !== 1 ? "s" : ""}
             </p>
             <button
               className="btn-p"
@@ -100,13 +94,13 @@ export default function Clients({
                 setAddClient(true);
               }}
             >
-              + Nueva
+              + Nuevo cliente
             </button>
           </div>
           {clients.length === 0 && (
             <div className="card" style={{ textAlign: "center", padding: 30 }}>
               <p style={{ color: "#8B7355", fontSize: 14 }}>
-                Agregá tu primer cliente con "+ Nueva".
+                Agregá tu primer cliente con "+ Nuevo cliente".
               </p>
             </div>
           )}
@@ -168,7 +162,7 @@ export default function Clients({
                             marginTop: 1,
                           }}
                         >
-                          {(cl.orders || []).length} pedido
+                          {(cl.orders || []).length} servicio
                           {(cl.orders || []).length !== 1 ? "s" : ""}
                         </p>
                       </div>
@@ -191,7 +185,7 @@ export default function Clients({
                             fontSize: 9,
                           }}
                         >
-                          {debt === 0 ? "✓ Saldada" : `Debe ${fmt(debt)}`}
+                          {debt === 0 ? "✓ Al día" : `Debe ${fmt(debt)}`}
                         </span>
                       </div>
                     </div>
@@ -224,7 +218,7 @@ export default function Clients({
           })}
         </div>
       ) : (
-        /* ── VISTA DETALLE ── */
+        /* ── DETALLE ── */
         c && (
           <div className="fi">
             <button
@@ -341,12 +335,11 @@ export default function Clients({
                       setAddOrder(c.id);
                     }}
                   >
-                    + Pedido
+                    + Servicio
                   </button>
                 </div>
               </div>
 
-              {/* Nota interna */}
               {c.internalNote && (
                 <div
                   style={{
@@ -364,7 +357,6 @@ export default function Clients({
                 </div>
               )}
 
-              {/* KPIs del cliente */}
               <div
                 style={{
                   display: "grid",
@@ -430,12 +422,12 @@ export default function Clients({
                 style={{ textAlign: "center", padding: 22, marginBottom: 11 }}
               >
                 <p style={{ color: "#8B7355", fontSize: 13 }}>
-                  Sin pedidos todavía. Usá "+ Pedido" para agregar.
+                  Sin servicios todavía. Usá "+ Servicio" para agregar.
                 </p>
               </div>
             )}
 
-            {/* Pedidos */}
+            {/* Servicios */}
             {(c.orders || []).map((o) => {
               const isUSD = (o.currency || "ARS") === "USD";
               const opaid = orderPaid(o);
@@ -453,8 +445,9 @@ export default function Clients({
                   ? Math.round(((o.total - costEst) / o.total) * 100)
                   : null;
               const stage =
-                ORDER_STAGES.find((s) => s.key === (o.status || "medidas")) ||
-                ORDER_STAGES[0];
+                ORDER_STAGES.find(
+                  (s) => s.key === (o.status || "presupuestado")
+                ) || ORDER_STAGES[0];
               const today = todayStr();
               const dueDiff = o.dueDate
                 ? Math.ceil(
@@ -477,7 +470,7 @@ export default function Clients({
                     borderTop: `3px solid ${stage.color}`,
                   }}
                 >
-                  {/* Selector de estado + fecha entrega */}
+                  {/* Estado + fecha entrega */}
                   <div
                     style={{
                       display: "flex",
@@ -549,7 +542,7 @@ export default function Clients({
                     )}
                   </div>
 
-                  {/* Header del pedido */}
+                  {/* Header del servicio */}
                   <div
                     style={{
                       display: "flex",
@@ -658,7 +651,6 @@ export default function Clients({
                           </>
                         )}
                       </div>
-                      {/* Margen e instalamentos */}
                       <div
                         style={{
                           display: "flex",
@@ -724,7 +716,7 @@ export default function Clients({
                           fontSize: 9,
                         }}
                       >
-                        {odebt === 0 ? "Saldado" : "Pendiente"}
+                        {odebt === 0 ? "Cobrado" : "Pendiente"}
                       </span>
                       <button
                         className="iBtn"
@@ -738,7 +730,7 @@ export default function Clients({
                             costEstimate: String(o.costEstimate || ""),
                             installments: String(o.installments || ""),
                             dueDate: o.dueDate || "",
-                            status: o.status || "medidas",
+                            status: o.status || "presupuestado",
                           });
                         }}
                       >
@@ -772,7 +764,7 @@ export default function Clients({
                           setAddStockProd({ clientId: c.id, orderId: o.id })
                         }
                       >
-                        + Stock
+                        + Material
                       </button>
                       <button
                         className="btn-g"
@@ -792,7 +784,7 @@ export default function Clients({
                     </div>
                   </div>
 
-                  {/* Materiales de stock */}
+                  {/* Materiales */}
                   {(o.usedProducts || []).length > 0 && (
                     <div
                       style={{
@@ -820,7 +812,7 @@ export default function Clients({
                             letterSpacing: ".6px",
                           }}
                         >
-                          Materiales de stock
+                          Materiales e insumos
                         </p>
                         <span
                           style={{ fontSize: 11, fontWeight: 700, color: a }}
@@ -865,7 +857,6 @@ export default function Clients({
                           </p>
                           <button
                             className="iBtn"
-                            title="Quitar y devolver al stock"
                             onClick={() =>
                               setRemoveUsed({
                                 clientId: c.id,
@@ -909,7 +900,7 @@ export default function Clients({
                             letterSpacing: ".6px",
                           }}
                         >
-                          Trabajos adicionales
+                          Conceptos adicionales
                         </p>
                         <span
                           style={{
@@ -965,7 +956,6 @@ export default function Clients({
                           </p>
                           <button
                             className="iBtn"
-                            title="Quitar ítem"
                             onClick={() =>
                               setRemoveCustom({
                                 clientId: c.id,
@@ -1038,7 +1028,7 @@ export default function Clients({
                                     color: sc,
                                   }}
                                 >
-                                  {fmtAmt(x.amount)}
+                                  {isUSD ? fmtUSD(x.amount) : fmt(x.amount)}
                                 </td>
                                 <td style={{ padding: "6px 7px" }}>
                                   <span
@@ -1113,7 +1103,7 @@ export default function Clients({
       {/* ═══ MODALS ═══ */}
 
       {addClient && (
-        <Modal title="Nueva Cliente" onClose={() => setAddClient(false)}>
+        <Modal title="Nuevo cliente" onClose={() => setAddClient(false)}>
           <ClientForm form={fCli} setForm={setFCli} />
           <ModalButtons
             onCancel={() => setAddClient(false)}
@@ -1128,7 +1118,7 @@ export default function Clients({
       )}
 
       {editCli && (
-        <Modal title="Editar Cliente" onClose={() => setEditCli(null)}>
+        <Modal title="Editar cliente" onClose={() => setEditCli(null)}>
           <ClientForm form={fECli} setForm={setFECli} />
           <ModalButtons
             onCancel={() => setEditCli(null)}
@@ -1141,7 +1131,7 @@ export default function Clients({
 
       {addOrder !== null && (
         <Modal
-          title="Nuevo Pedido"
+          title="Nuevo servicio"
           sub={clients.find((cl) => cl.id === addOrder)?.name}
           onClose={() => setAddOrder(null)}
           wide
@@ -1161,7 +1151,7 @@ export default function Clients({
 
       {editOrder && (
         <Modal
-          title="Editar Pedido"
+          title="Editar servicio"
           sub={clients.find((cl) => cl.id === editOrder.clientId)?.name}
           onClose={() => setEditOrder(null)}
           wide
@@ -1180,7 +1170,7 @@ export default function Clients({
 
       {addPay && (
         <Modal
-          title="Registrar Pago"
+          title="Registrar pago"
           sub={clients.find((cl) => cl.id === addPay.clientId)?.name}
           onClose={() => setAddPay(null)}
         >
@@ -1198,7 +1188,7 @@ export default function Clients({
       )}
 
       {editPay && (
-        <Modal title="Editar Pago" onClose={() => setEditPay(null)}>
+        <Modal title="Editar pago" onClose={() => setEditPay(null)}>
           <PaymentForm form={fEPay} setForm={setFEPay} />
           <ModalButtons
             onCancel={() => setEditPay(null)}
@@ -1217,29 +1207,29 @@ export default function Clients({
 
       {addCustomItem && (
         <Modal
-          title="Agregar ítem a la factura"
+          title="Agregar concepto"
           sub={clients.find((cl) => cl.id === addCustomItem.clientId)?.name}
           onClose={() => setAddCustomItem(null)}
         >
           <p style={{ fontSize: 12, color: "#8B7355", marginBottom: 12 }}>
-            Agregá un trabajo adicional que no está en el stock. Se sumará al
-            total del pedido y aparecerá en la factura.
+            Agregá un concepto adicional al servicio. Se sumará al total y
+            aparecerá en la factura.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Field label="Nombre del ítem *">
+            <Field label="Nombre del concepto *">
               <input
                 className="inp"
-                placeholder="Ej: Vestido corto para el Civil"
+                placeholder="Ej: Materiales adicionales, traslado..."
                 value={fCI.name}
                 onChange={(e) =>
                   setFCI((x) => ({ ...x, name: e.target.value }))
                 }
               />
             </Field>
-            <Field label="Detalle / Descripción">
+            <Field label="Detalle">
               <input
                 className="inp"
-                placeholder="Ej: Sin mangas, color marfil"
+                placeholder="Opcional"
                 value={fCI.notes}
                 onChange={(e) =>
                   setFCI((x) => ({ ...x, notes: e.target.value }))
@@ -1257,19 +1247,6 @@ export default function Clients({
                 }
               />
             </Field>
-            <div
-              style={{
-                background: "#F5F0FF",
-                borderRadius: 9,
-                padding: "10px 12px",
-                border: "1.5px solid #C8B8E855",
-              }}
-            >
-              <p style={{ fontSize: 12, color: "#6A4E8A" }}>
-                Este ítem aparecerá como una línea separada en la factura junto
-                con el pedido principal.
-              </p>
-            </div>
           </div>
           <ModalButtons
             onCancel={() => setAddCustomItem(null)}
@@ -1284,20 +1261,20 @@ export default function Clients({
                 }
               )
             }
-            label="Agregar al pedido"
+            label="Agregar"
           />
         </Modal>
       )}
 
       {removeCustom && (
         <ConfirmModal
-          title="¿Quitar ítem?"
+          title="¿Quitar concepto?"
           sub={removeCustom.item.name}
-          description={`Se eliminará ${removeCustom.item.name} (${fmt(
+          description={`Se eliminará "${removeCustom.item.name}" (${fmt(
             removeCustom.item.price
-          )}) del pedido.`}
-          note="El total del pedido se reducirá en ese monto."
-          confirmLabel="Quitar ítem"
+          )}) del servicio.`}
+          note="El total se reducirá en ese monto."
+          confirmLabel="Quitar"
           onCancel={() => setRemoveCustom(null)}
           onConfirm={() => {
             onDeleteCustomItem(
@@ -1310,9 +1287,8 @@ export default function Clients({
         />
       )}
 
-      {/* Modal agregar producto del stock — fiel al original */}
       {addStockProd && (
-        <AddStockProductModal
+        <AddMaterialModal
           products={products}
           primary={p}
           onClose={() => setAddStockProd(null)}
@@ -1333,7 +1309,7 @@ export default function Clients({
         <ConfirmModal
           title="¿Quitar material?"
           sub={removeUsed.usedProduct.productName}
-          description={`Se quitará ${removeUsed.usedProduct.qty} ${removeUsed.usedProduct.unit} del pedido y se devolverán al stock.`}
+          description={`Se quitarán ${removeUsed.usedProduct.qty} ${removeUsed.usedProduct.unit} del servicio y se devolverán al stock.`}
           note="Esta acción no se puede deshacer."
           confirmLabel="Quitar y devolver stock"
           onCancel={() => setRemoveUsed(null)}
@@ -1359,7 +1335,7 @@ export default function Clients({
             className="inp"
             rows={4}
             style={{ resize: "vertical", fontFamily: "inherit" }}
-            placeholder="Observaciones, preferencias, historial..."
+            placeholder="Observaciones, preferencias, historial del cliente..."
             value={editNote.note}
             onChange={(e) =>
               setEditNote((n) => ({ ...n, note: e.target.value }))
@@ -1379,22 +1355,24 @@ export default function Clients({
   );
 }
 
-// ── AddStockProductModal — idéntico al original ────────
-function AddStockProductModal({ products, onAdd, onClose, primary }) {
+// ── Modal agregar material ─────────────────────────────
+function AddMaterialModal({ products, onAdd, onClose, primary }) {
   const [selId, setSelId] = useState(null);
   const [qty, setQty] = useState("1");
   const available = products.filter((x) => x.stock > 0);
   const sel = available.find((x) => x.id === selId);
-
   const confirm = () => {
-    if (!sel || !parseFloat(qty) || parseFloat(qty) <= 0) return;
-    const q = parseFloat(qty);
-    if (q > sel.stock) return;
-    onAdd(sel, q);
+    if (
+      !sel ||
+      !parseFloat(qty) ||
+      parseFloat(qty) <= 0 ||
+      parseFloat(qty) > sel.stock
+    )
+      return;
+    onAdd(sel, parseFloat(qty));
   };
-
   return (
-    <Modal title="Agregar producto del stock" onClose={onClose} wide>
+    <Modal title="Agregar material del stock" onClose={onClose} wide>
       {available.length === 0 ? (
         <p
           style={{
@@ -1404,13 +1382,12 @@ function AddStockProductModal({ products, onAdd, onClose, primary }) {
             fontSize: 13,
           }}
         >
-          No hay productos con stock disponible.
+          No hay materiales con stock disponible.
         </p>
       ) : (
         <>
           <p style={{ fontSize: 12, color: "#8B7355", marginBottom: 12 }}>
-            Seleccioná un producto del catálogo. Se descontará del stock al
-            confirmar.
+            Seleccioná un material. Se descontará del stock al confirmar.
           </p>
           <div style={{ maxHeight: 260, overflowY: "auto", marginBottom: 14 }}>
             {available.map((prod) => {
@@ -1559,7 +1536,7 @@ function AddStockProductModal({ products, onAdd, onClose, primary }) {
           <ModalButtons
             onCancel={onClose}
             onSave={confirm}
-            label="Agregar al pedido"
+            label="Agregar al servicio"
           />
         </>
       )}
@@ -1574,7 +1551,7 @@ function ClientForm({ form, setForm }) {
       <Field label="Nombre *">
         <input
           className="inp"
-          placeholder="Ej: María González"
+          placeholder="Nombre del cliente"
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
@@ -1583,7 +1560,7 @@ function ClientForm({ form, setForm }) {
         <Field label="Teléfono">
           <input
             className="inp"
-            placeholder="11-0000"
+            placeholder="+54 11..."
             value={form.phone}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
           />
@@ -1626,10 +1603,10 @@ function ClientForm({ form, setForm }) {
 function OrderForm({ form, setForm, p }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <Field label="Descripción del trabajo *">
+      <Field label="Descripción del servicio *">
         <input
           className="inp"
-          placeholder="Ej: Vestido de novia"
+          placeholder="Ej: Diseño de logo, reparación, corte..."
           value={form.productName}
           onChange={(e) =>
             setForm((f) => ({ ...f, productName: e.target.value }))
@@ -1727,7 +1704,7 @@ function OrderForm({ form, setForm, p }) {
           className="inp"
           rows={2}
           style={{ resize: "vertical" }}
-          placeholder="Detalles, medidas, preferencias..."
+          placeholder="Detalles, observaciones, requerimientos..."
           value={form.notes}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
         />
