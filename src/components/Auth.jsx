@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-/**
- * Pantalla de login / registro.
- * Recibe callbacks de useAuth — no llama a Supabase directamente.
- */
 export default function Auth({ onLogin, onRegister, primary }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
@@ -24,7 +20,9 @@ export default function Auth({ onLogin, onRegister, primary }) {
     setErr("");
     try {
       await onRegister(name, email, pass);
-      setInfo("Cuenta creada. Ya puedes iniciar sesión");
+      setInfo(
+        "Cuenta creada. Revisá tu email para confirmar y luego iniciá sesión."
+      );
       setMode("login");
       setPass("");
       setPass2("");
@@ -62,19 +60,6 @@ export default function Auth({ onLogin, onRegister, primary }) {
     mode === "login" ? handleLogin() : handleRegister();
   };
 
-  const inputStyle = {
-    width: "100%",
-    border: `1.5px solid rgba(180,170,200,.2)`,
-    borderRadius: 10,
-    padding: "12px 14px",
-    fontFamily: "inherit",
-    fontSize: 14,
-    color: "#F0EDF8",
-    background: "rgba(255,255,255,.07)",
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
   return (
     <div
       style={{
@@ -91,14 +76,13 @@ export default function Auth({ onLogin, onRegister, primary }) {
         @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
         .auth-inp:focus{border-color:${primary} !important;}
         .auth-inp::placeholder{color:rgba(180,170,200,.4);}
-        .btn-auth{background:linear-gradient(135deg,${primary},#8B6F9E);color:#fff;border:none;padding:12px;
-          border-radius:8px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;
-          transition:opacity .2s;width:100%;display:block;}
+        .btn-auth{background:linear-gradient(135deg,${primary},#8B6F9E);color:#fff;border:none;padding:12px;border-radius:8px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;transition:opacity .2s;width:100%;display:block;}
         .btn-auth:hover{opacity:.87;} .btn-auth:disabled{opacity:.6;cursor:not-allowed;}
+        .tab-auth{flex:1;background:none;border:none;padding:"9px 0";font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
       `}</style>
 
       <div
-        style={{ width: "100%", maxWidth: 370, animation: "fadeUp .5s ease" }}
+        style={{ width: "100%", maxWidth: 380, animation: "fadeUp .5s ease" }}
       >
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
@@ -112,17 +96,20 @@ export default function Auth({ onLogin, onRegister, primary }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 22,
             }}
           >
             <img
-              src="/logo-b.png"
-              alt="Orvian"
+              src="/logo.png"
+              alt="Logo"
               style={{
-                width: 55,
-                height: 50,
-                borderRadius: 14,
+                width: 36,
+                height: 36,
                 objectFit: "contain",
+                borderRadius: 8,
+              }}
+              onError={(e) => {
+                e.target.style.display = "none";
+                e.target.parentNode.innerHTML = "🧵";
               }}
             />
           </div>
@@ -134,7 +121,7 @@ export default function Auth({ onLogin, onRegister, primary }) {
               fontWeight: 700,
             }}
           >
-            ORVIAN
+            Orvian
           </h1>
           <p
             style={{
@@ -156,15 +143,14 @@ export default function Auth({ onLogin, onRegister, primary }) {
             border: "1.5px solid rgba(180,170,200,.1)",
             borderRadius: 16,
             padding: 24,
+            marginBottom: 12,
           }}
         >
           {/* Tabs */}
           <div
             style={{
               display: "flex",
-              background: "rgba(255,255,255,.05)",
-              borderRadius: 10,
-              padding: 3,
+              borderBottom: "1px solid rgba(180,170,200,.15)",
               marginBottom: 20,
             }}
           >
@@ -181,17 +167,18 @@ export default function Auth({ onLogin, onRegister, primary }) {
                 }}
                 style={{
                   flex: 1,
-                  padding: "8px",
+                  background: "none",
                   border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
+                  padding: "9px 0",
                   fontFamily: "inherit",
                   fontSize: 13,
                   fontWeight: 600,
+                  cursor: "pointer",
+                  color: mode === m ? primary : "rgba(180,170,200,.45)",
+                  borderBottom: `2px solid ${
+                    mode === m ? primary : "transparent"
+                  }`,
                   transition: "all .2s",
-                  background:
-                    mode === m ? "rgba(255,255,255,.1)" : "transparent",
-                  color: mode === m ? "#F0EDF8" : "rgba(180,170,200,.5)",
                 }}
               >
                 {l}
@@ -200,80 +187,244 @@ export default function Auth({ onLogin, onRegister, primary }) {
           </div>
 
           {/* Campos */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
             {mode === "register" && (
-              <input
-                className="auth-inp"
-                style={inputStyle}
-                placeholder="Tu nombre"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: "rgba(180,170,200,.55)",
+                    textTransform: "uppercase",
+                    letterSpacing: ".7px",
+                    display: "block",
+                    marginBottom: 5,
+                  }}
+                >
+                  Nombre
+                </label>
+                <input
+                  className="auth-inp"
+                  style={{
+                    width: "100%",
+                    border: "1.5px solid rgba(180,170,200,.2)",
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    fontFamily: "inherit",
+                    fontSize: 14,
+                    color: "#F0EDF8",
+                    background: "rgba(255,255,255,.07)",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  placeholder="Tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
             )}
-            <input
-              className="auth-inp"
-              style={inputStyle}
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-            />
-            <input
-              className="auth-inp"
-              style={inputStyle}
-              type="password"
-              placeholder="Contraseña"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-            />
-            {mode === "register" && (
+            <div>
+              <label
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "rgba(180,170,200,.55)",
+                  textTransform: "uppercase",
+                  letterSpacing: ".7px",
+                  display: "block",
+                  marginBottom: 5,
+                }}
+              >
+                Email
+              </label>
               <input
                 className="auth-inp"
-                style={inputStyle}
-                type="password"
-                placeholder="Repetir contraseña"
-                value={pass2}
-                onChange={(e) => setPass2(e.target.value)}
+                style={{
+                  width: "100%",
+                  border: "1.5px solid rgba(180,170,200,.2)",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  color: "#F0EDF8",
+                  background: "rgba(255,255,255,.07)",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submit()}
               />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "rgba(180,170,200,.55)",
+                  textTransform: "uppercase",
+                  letterSpacing: ".7px",
+                  display: "block",
+                  marginBottom: 5,
+                }}
+              >
+                Contraseña
+              </label>
+              <input
+                className="auth-inp"
+                style={{
+                  width: "100%",
+                  border: "1.5px solid rgba(180,170,200,.2)",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  color: "#F0EDF8",
+                  background: "rgba(255,255,255,.07)",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                type="password"
+                placeholder="••••••"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+              />
+            </div>
+            {mode === "register" && (
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: "rgba(180,170,200,.55)",
+                    textTransform: "uppercase",
+                    letterSpacing: ".7px",
+                    display: "block",
+                    marginBottom: 5,
+                  }}
+                >
+                  Repetir contraseña
+                </label>
+                <input
+                  className="auth-inp"
+                  style={{
+                    width: "100%",
+                    border: "1.5px solid rgba(180,170,200,.2)",
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    fontFamily: "inherit",
+                    fontSize: 14,
+                    color: "#F0EDF8",
+                    background: "rgba(255,255,255,.07)",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                  type="password"
+                  placeholder="••••••"
+                  value={pass2}
+                  onChange={(e) => setPass2(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submit()}
+                />
+              </div>
             )}
+            {err && (
+              <p
+                style={{
+                  color: "#E06B6B",
+                  fontSize: 12,
+                  textAlign: "center",
+                  background: "rgba(224,107,107,.1)",
+                  padding: "8px",
+                  borderRadius: 7,
+                }}
+              >
+                {err}
+              </p>
+            )}
+            {info && (
+              <p
+                style={{
+                  color: "#6B9E8B",
+                  fontSize: 12,
+                  textAlign: "center",
+                  background: "rgba(107,158,139,.1)",
+                  padding: "8px",
+                  borderRadius: 7,
+                }}
+              >
+                {info}
+              </p>
+            )}
+            <button
+              className="btn-auth"
+              style={{ marginTop: 3 }}
+              onClick={submit}
+              disabled={loading}
+            >
+              {loading
+                ? "Cargando..."
+                : mode === "login"
+                ? "Entrar →"
+                : "Crear cuenta"}
+            </button>
           </div>
+        </div>
 
-          {err && (
-            <p
-              style={{
-                color: "#E07070",
-                fontSize: 12,
-                margin: "10px 0 0",
-                textAlign: "center",
-              }}
-            >
-              {err}
-            </p>
-          )}
-          {info && (
-            <p
-              style={{
-                color: "#6B9E8B",
-                fontSize: 12,
-                margin: "10px 0 0",
-                textAlign: "center",
-              }}
-            >
-              {info}
-            </p>
-          )}
-
-          <button
-            className="btn-auth"
-            style={{ marginTop: 16 }}
-            onClick={submit}
-            disabled={loading}
+        {/* ── Botón demo ── */}
+        <div
+          style={{
+            background: "rgba(255,255,255,.03)",
+            border: "1.5px solid rgba(180,170,200,.1)",
+            borderRadius: 14,
+            padding: "16px 20px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              color: "rgba(180,170,200,.6)",
+              fontSize: 12,
+              marginBottom: 10,
+            }}
           >
-            {loading ? "..." : mode === "login" ? "Entrar" : "Crear cuenta"}
+            ¿Querés ver cómo funciona antes de registrarte?
+          </p>
+          <button
+            onClick={() => onLogin("__demo__", "__demo__")}
+            style={{
+              background: "rgba(200,149,108,.15)",
+              border: "1.5px solid rgba(200,149,108,.35)",
+              color: "#C8956C",
+              borderRadius: 9,
+              padding: "9px 20px",
+              fontFamily: "inherit",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              width: "100%",
+              transition: "all .2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.target.style.background = "rgba(200,149,108,.25)")
+            }
+            onMouseLeave={(e) =>
+              (e.target.style.background = "rgba(200,149,108,.15)")
+            }
+          >
+            👀 Ver demo con datos de ejemplo
           </button>
+          <p
+            style={{
+              color: "rgba(180,170,200,.3)",
+              fontSize: 10,
+              marginTop: 8,
+            }}
+          >
+            Sin registrarte · Datos ficticios · Podés limpiarlos cuando quieras
+          </p>
         </div>
 
         <p

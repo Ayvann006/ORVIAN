@@ -7,11 +7,26 @@ import { supabaseReady } from "./services/supabaseClient.js";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import { DEFAULT_CFG, DEFAULT_CATS } from "./utils/constants.js";
+import {
+  DEMO_CLIENTS,
+  DEMO_CATS,
+  DEMO_PRODUCTS,
+  DEMO_SALES,
+  DEMO_CFG,
+  isDemoLoaded,
+} from "./demoData.js";
 import "./styles/globals.css";
+
+const DEMO_USER = {
+  id: "demo",
+  name: "Usuario Demo",
+  email: "demo@orvian.app",
+};
 
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [toast, setToast] = useState("");
+  const [demoMode, setDemoMode] = useState(false);
   const saveTimer = useRef(null);
 
   const doToast = (msg) => {
@@ -19,10 +34,20 @@ export default function App() {
     setTimeout(() => setToast(""), 2100);
   };
 
-  const { user, loading, login, register, logout, updatePassword } = useAuth();
+  const {
+    user: authUser,
+    loading,
+    login,
+    register,
+    logout,
+    updatePassword,
+  } = useAuth();
   const clientsHook = useClients([], null, doToast);
   const ordersHook = useOrders(DEFAULT_CATS, [], doToast, []);
   const setProductsRef = ordersHook.setProducts;
+
+  // Usuario activo: demo o real
+  const user = demoMode ? DEMO_USER : authUser;
 
   const loadData = async (userId) => {
     try {
@@ -39,8 +64,9 @@ export default function App() {
     }
   };
 
+  // Solo guarda si NO está en modo demo
   const saveAll = (clients, cats, products, cfgData, sales, userId) => {
-    if (!userId) return;
+    if (!userId || demoMode) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
@@ -59,15 +85,16 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (user)
+    if (authUser && !demoMode) {
       saveAll(
         clientsHook.clients,
         ordersHook.cats,
         ordersHook.products,
         cfg,
         ordersHook.sales,
-        user.id
+        authUser.id
       );
+    }
   }, [
     clientsHook.clients,
     ordersHook.cats,
@@ -78,12 +105,34 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
+  // ── Login: intercepta el modo demo ──────────────────
   const handleLogin = async (email, password) => {
+    if (email === "__demo__") {
+      // Modo demo — carga datos ficticios sin tocar Supabase
+      clientsHook.hydrateClients(DEMO_CLIENTS);
+      ordersHook.hydrateCats(DEMO_CATS);
+      ordersHook.hydrateProducts(DEMO_PRODUCTS);
+      ordersHook.hydrateSales(DEMO_SALES);
+      setCfg(DEMO_CFG);
+      setDemoMode(true);
+      doToast("Modo demo activado · Los datos no se guardan");
+      return;
+    }
     const userData = await login(email, password);
     await loadData(userData.id);
   };
 
   const handleLogout = async () => {
+    if (demoMode) {
+      // Salir del modo demo
+      setDemoMode(false);
+      clientsHook.hydrateClients([]);
+      ordersHook.hydrateCats(DEFAULT_CATS);
+      ordersHook.hydrateProducts([]);
+      ordersHook.hydrateSales([]);
+      setCfg(DEFAULT_CFG);
+      return;
+    }
     await logout();
     clientsHook.hydrateClients([]);
     ordersHook.hydrateCats(DEFAULT_CATS);
@@ -92,8 +141,19 @@ export default function App() {
     setCfg(DEFAULT_CFG);
   };
 
-  // ── Supabase no configurado ──────────────────────────
-  if (!supabaseReady) {
+  // ── Limpiar datos demo (desde dashboard) ────────────
+  const handleClearDemo = () => {
+    clientsHook.hydrateClients([]);
+    ordersHook.hydrateCats(DEFAULT_CATS);
+    ordersHook.hydrateProducts([]);
+    ordersHook.hydrateSales([]);
+    setCfg(DEFAULT_CFG);
+    doToast("Datos de ejemplo eliminados");
+  };
+
+  // ── Pantalla: Supabase no configurado ────────────────
+  // En modo demo no importa si Supabase está configurado
+  if (!supabaseReady && !demoMode && !user) {
     return (
       <div
         style={{
@@ -160,7 +220,7 @@ export default function App() {
                 letterSpacing: ".7px",
               }}
             >
-              En CodeSandbox:
+              En CodeSandbox / StackBlitz:
             </p>
             <ol
               style={{
@@ -171,13 +231,10 @@ export default function App() {
               }}
             >
               <li>
-                Click en el ícono{" "}
-                <strong style={{ color: "#F0EDF8" }}>⚙️</strong> del panel
-                izquierdo
-              </li>
-              <li>
-                Seleccioná{" "}
-                <strong style={{ color: "#F0EDF8" }}>"Env Variables"</strong>
+                Buscá el panel de{" "}
+                <strong style={{ color: "#F0EDF8" }}>
+                  Variables de entorno / Secrets
+                </strong>
               </li>
               <li>
                 Agregá{" "}
@@ -205,54 +262,34 @@ export default function App() {
                   VITE_SUPABASE_KEY
                 </code>
               </li>
-              <li>
-                Hacé click en{" "}
-                <strong style={{ color: "#F0EDF8" }}>"Restart Sandbox"</strong>
-              </li>
+              <li>Reiniciá el servidor</li>
             </ol>
           </div>
-          <div
+          {/* Igual puede ver el demo sin Supabase */}
+          <button
+            onClick={() => handleLogin("__demo__", "__demo__")}
             style={{
-              background: "rgba(0,0,0,.3)",
-              borderRadius: 10,
-              padding: "16px 20px",
+              width: "100%",
+              marginTop: 8,
+              background: "rgba(200,149,108,.15)",
+              border: "1.5px solid rgba(200,149,108,.35)",
+              color: "#C8956C",
+              borderRadius: 9,
+              padding: "11px 20px",
+              fontFamily: "inherit",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
             }}
           >
-            <p
-              style={{
-                color: "#6B9E8B",
-                fontSize: 12,
-                fontWeight: 700,
-                marginBottom: 8,
-                textTransform: "uppercase",
-                letterSpacing: ".7px",
-              }}
-            >
-              ¿Dónde obtengo esos valores?
-            </p>
-            <p
-              style={{
-                color: "rgba(240,237,248,.6)",
-                fontSize: 13,
-                lineHeight: 1.7,
-              }}
-            >
-              Entrá a <strong style={{ color: "#F0EDF8" }}>supabase.com</strong>{" "}
-              → tu proyecto → Settings → API.
-              <br />
-              Copiá el <strong style={{ color: "#F0EDF8" }}>
-                Project URL
-              </strong>{" "}
-              y la clave{" "}
-              <strong style={{ color: "#F0EDF8" }}>anon public</strong>.
-            </p>
-          </div>
+            👀 Ver demo sin configurar Supabase
+          </button>
         </div>
       </div>
     );
   }
 
-  if (loading) {
+  if (loading && !demoMode) {
     return (
       <div
         style={{
@@ -290,6 +327,9 @@ export default function App() {
       sales={ordersHook.sales}
       toast={toast}
       doToast={doToast}
+      demoMode={demoMode}
+      onClearDemo={handleClearDemo}
+      isDemoLoaded={isDemoLoaded(clientsHook.clients)}
       onSaveClient={clientsHook.saveClient}
       onUpdateClient={clientsHook.updateClient}
       onDeleteClient={clientsHook.deleteClient}
