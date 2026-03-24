@@ -27,6 +27,10 @@ export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [toast, setToast] = useState("");
   const [demoMode, setDemoMode] = useState(false);
+  
+  // NUEVO: Estado para evitar que el auto-guardado pise los datos al iniciar
+  const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
+  
   const saveTimer = useRef(null);
 
   const doToast = (msg) => {
@@ -42,13 +46,14 @@ export default function App() {
     logout,
     updatePassword,
   } = useAuth();
+  
   const clientsHook = useClients([], null, doToast);
   const ordersHook = useOrders(DEFAULT_CATS, [], doToast, []);
   const setProductsRef = ordersHook.setProducts;
 
-  // Usuario activo: demo o real
   const user = demoMode ? DEMO_USER : authUser;
 
+  // ── FUNCIÓN DE CARGA ────────────────────────────────
   const loadData = async (userId) => {
     try {
       const data = await dataApi.load(userId);
@@ -61,10 +66,13 @@ export default function App() {
       }
     } catch (err) {
       console.error("Error cargando datos:", err);
+    } finally {
+      // Importante: Marcamos que la carga terminó (con éxito o no)
+      setIsInitialLoadDone(true);
     }
   };
 
-  // Solo guarda si NO está en modo demo
+  // ── FUNCIÓN DE GUARDADO ─────────────────────────────
   const saveAll = (clients, cats, products, cfgData, sales, userId) => {
     if (!userId || demoMode) return;
     clearTimeout(saveTimer.current);
@@ -84,8 +92,17 @@ export default function App() {
     }, 800);
   };
 
+  // ── EFECTO 1: CARGA INICIAL (Soluciona el F5) ────────
   useEffect(() => {
     if (authUser && !demoMode) {
+      loadData(authUser.id);
+    }
+  }, [authUser]); // Se dispara cuando useAuth recupera la sesión
+
+  // ── EFECTO 2: AUTO-GUARDADO SEGURO ──────────────────
+  useEffect(() => {
+    // Solo guardamos si hay usuario Y si ya terminamos de cargar los datos iniciales
+    if (authUser && !demoMode && isInitialLoadDone) {
       saveAll(
         clientsHook.clients,
         ordersHook.cats,
@@ -101,14 +118,13 @@ export default function App() {
     ordersHook.products,
     cfg,
     ordersHook.sales,
+    isInitialLoadDone // Agregamos esta dependencia para seguridad
   ]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
-  // ── Login: intercepta el modo demo ──────────────────
   const handleLogin = async (email, password) => {
     if (email === "__demo__") {
-      // Modo demo — carga datos ficticios sin tocar Supabase
       clientsHook.hydrateClients(DEMO_CLIENTS);
       ordersHook.hydrateCats(DEMO_CATS);
       ordersHook.hydrateProducts(DEMO_PRODUCTS);
@@ -119,21 +135,16 @@ export default function App() {
       return;
     }
     const userData = await login(email, password);
-    await loadData(userData.id);
+    if (userData) await loadData(userData.id);
   };
 
   const handleLogout = async () => {
+    setIsInitialLoadDone(false); // Reseteamos el flag de carga
     if (demoMode) {
-      // Salir del modo demo
       setDemoMode(false);
-      clientsHook.hydrateClients([]);
-      ordersHook.hydrateCats(DEFAULT_CATS);
-      ordersHook.hydrateProducts([]);
-      ordersHook.hydrateSales([]);
-      setCfg(DEFAULT_CFG);
-      return;
+    } else {
+      await logout();
     }
-    await logout();
     clientsHook.hydrateClients([]);
     ordersHook.hydrateCats(DEFAULT_CATS);
     ordersHook.hydrateProducts([]);
@@ -141,7 +152,6 @@ export default function App() {
     setCfg(DEFAULT_CFG);
   };
 
-  // ── Limpiar datos demo (desde dashboard) ────────────
   const handleClearDemo = () => {
     clientsHook.hydrateClients([]);
     ordersHook.hydrateCats(DEFAULT_CATS);
@@ -151,139 +161,15 @@ export default function App() {
     doToast("Datos de ejemplo eliminados");
   };
 
-  // ── Pantalla: Supabase no configurado ────────────────
-  // En modo demo no importa si Supabase está configurado
+  // Renderizado de carga y configuración (se mantiene igual)
   if (!supabaseReady && !demoMode && !user) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(160deg,#1C1E2A,#22263A)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "'DM Sans',sans-serif",
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(255,255,255,.05)",
-            border: "1.5px solid rgba(200,149,108,.4)",
-            borderRadius: 18,
-            padding: 32,
-            maxWidth: 500,
-            width: "100%",
-          }}
-        >
-          <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>
-            ⚙️
-          </div>
-          <h2
-            style={{
-              color: "#F0EDF8",
-              fontFamily: "'Outfit',sans-serif",
-              fontSize: 22,
-              textAlign: "center",
-              marginBottom: 10,
-            }}
-          >
-            Configurá Supabase
-          </h2>
-          <p
-            style={{
-              color: "rgba(240,237,248,.6)",
-              fontSize: 14,
-              textAlign: "center",
-              marginBottom: 24,
-              lineHeight: 1.6,
-            }}
-          >
-            Necesitás configurar las variables de entorno para usar el
-            dashboard.
-          </p>
-          <div
-            style={{
-              background: "rgba(0,0,0,.3)",
-              borderRadius: 10,
-              padding: "16px 20px",
-              marginBottom: 16,
-            }}
-          >
-            <p
-              style={{
-                color: "#C8956C",
-                fontSize: 12,
-                fontWeight: 700,
-                marginBottom: 10,
-                textTransform: "uppercase",
-                letterSpacing: ".7px",
-              }}
-            >
-              En CodeSandbox / StackBlitz:
-            </p>
-            <ol
-              style={{
-                color: "rgba(240,237,248,.7)",
-                fontSize: 13,
-                lineHeight: 2,
-                paddingLeft: 18,
-              }}
-            >
-              <li>
-                Buscá el panel de{" "}
-                <strong style={{ color: "#F0EDF8" }}>
-                  Variables de entorno / Secrets
-                </strong>
-              </li>
-              <li>
-                Agregá{" "}
-                <code
-                  style={{
-                    background: "rgba(255,255,255,.1)",
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                    color: "#C8956C",
-                  }}
-                >
-                  VITE_SUPABASE_URL
-                </code>
-              </li>
-              <li>
-                Agregá{" "}
-                <code
-                  style={{
-                    background: "rgba(255,255,255,.1)",
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                    color: "#C8956C",
-                  }}
-                >
-                  VITE_SUPABASE_KEY
-                </code>
-              </li>
-              <li>Reiniciá el servidor</li>
-            </ol>
-          </div>
-          {/* Igual puede ver el demo sin Supabase */}
-          <button
-            onClick={() => handleLogin("__demo__", "__demo__")}
-            style={{
-              width: "100%",
-              marginTop: 8,
-              background: "rgba(200,149,108,.15)",
-              border: "1.5px solid rgba(200,149,108,.35)",
-              color: "#C8956C",
-              borderRadius: 9,
-              padding: "11px 20px",
-              fontFamily: "inherit",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            👀 Ver demo sin configurar Supabase
-          </button>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#1C1E2A,#22263A)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", padding: 24 }}>
+        <div style={{ background: "rgba(255,255,255,.05)", border: "1.5px solid rgba(200,149,108,.4)", borderRadius: 18, padding: 32, maxWidth: 500, width: "100%" }}>
+          <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>⚙️</div>
+          <h2 style={{ color: "#F0EDF8", fontFamily: "'Outfit',sans-serif", fontSize: 22, textAlign: "center", marginBottom: 10 }}>Configurá Supabase</h2>
+          <p style={{ color: "rgba(240,237,248,.6)", fontSize: 14, textAlign: "center", marginBottom: 24, lineHeight: 1.6 }}>Necesitás configurar las variables de entorno para usar el dashboard.</p>
+          <button onClick={() => handleLogin("__demo__", "__demo__")} style={{ width: "100%", background: "rgba(200,149,108,.15)", border: "1.5px solid rgba(200,149,108,.35)", color: "#C8956C", borderRadius: 9, padding: "11px 20px", cursor: "pointer", fontWeight: 600 }}>👀 Ver demo sin configurar Supabase</button>
         </div>
       </div>
     );
@@ -291,24 +177,8 @@ export default function App() {
 
   if (loading && !demoMode) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(160deg,#1C1E2A,#22263A)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <p
-          style={{
-            color: "rgba(240,237,248,.5)",
-            fontFamily: "'DM Sans',sans-serif",
-            fontSize: 14,
-          }}
-        >
-          Cargando...
-        </p>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#1C1E2A,#22263A)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "rgba(240,237,248,.5)", fontFamily: "'DM Sans',sans-serif", fontSize: 14 }}>Cargando sesión...</p>
       </div>
     );
   }
@@ -337,21 +207,14 @@ export default function App() {
       onSaveOrder={clientsHook.saveOrder}
       onUpdateOrder={clientsHook.updateOrder}
       onUpdateOrderStatus={clientsHook.updateOrderStatus}
-      onDeleteOrder={(cid, oid, cb) => clientsHook.deleteOrder(cid, oid, cb)}
+      onDeleteOrder={clientsHook.deleteOrder}
       onSavePayment={clientsHook.savePayment}
       onUpdatePayment={clientsHook.updatePayment}
       onDeletePayment={clientsHook.deletePayment}
       onSaveCustomItem={clientsHook.saveCustomItem}
       onDeleteCustomItem={clientsHook.deleteCustomItem}
-      onAddProductToOrder={(args) =>
-        clientsHook.addProductToOrder({ ...args, setProducts: setProductsRef })
-      }
-      onRemoveProductFromOrder={(args) =>
-        clientsHook.removeProductFromOrder({
-          ...args,
-          setProducts: setProductsRef,
-        })
-      }
+      onAddProductToOrder={(args) => clientsHook.addProductToOrder({ ...args, setProducts: setProductsRef })}
+      onRemoveProductFromOrder={(args) => clientsHook.removeProductFromOrder({ ...args, setProducts: setProductsRef })}
       onSaveProduct={ordersHook.saveProduct}
       onUpdateProduct={ordersHook.updateProduct}
       onDeleteProduct={ordersHook.deleteProduct}
