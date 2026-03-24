@@ -20,9 +20,7 @@ export default function Auth({ onLogin, onRegister, primary }) {
     setErr("");
     try {
       await onRegister(name, email, pass);
-      setInfo(
-        "Cuenta creada. Revisá tu email para confirmar y luego iniciá sesión."
-      );
+      setInfo("Cuenta creada. Ya puedes iniciar sesión.");
       setMode("login");
       setPass("");
       setPass2("");
@@ -99,11 +97,11 @@ export default function Auth({ onLogin, onRegister, primary }) {
             }}
           >
             <img
-              src="/logo.png"
+              src="/logo-b.png"
               alt="Logo"
               style={{
-                width: 36,
-                height: 36,
+                width: 45,
+                height: 45,
                 objectFit: "contain",
                 borderRadius: 8,
               }}
