@@ -20,6 +20,7 @@ export const PAY_COLORS = {
   transferencia: "#8B6F9E",
   tarjeta: "#C8956C",
 };
+
 export const PAY_LABELS = {
   efectivo: "Efectivo",
   transferencia: "Transferencia",
@@ -37,7 +38,7 @@ export const CLI_COLORS = [
   "#C47A8A",
 ];
 
-// ─── Opciones de íconos / colores para categorías ────
+// ─── Opciones UI ──────────────────────────────────────
 export const ICON_OPTS = [
   "📦",
   "⭐",
@@ -60,6 +61,7 @@ export const ICON_OPTS = [
   "🪡",
   "✂️",
 ];
+
 export const COL_OPTS = [
   "#C8956C",
   "#8B6F9E",
@@ -72,6 +74,7 @@ export const COL_OPTS = [
   "#4A6B8A",
   "#8B7340",
 ];
+
 export const STOCK_UNITS = [
   "unidades",
   "horas",
@@ -85,8 +88,7 @@ export const STOCK_UNITS = [
   "servicios",
 ];
 
-// ─── Estados del servicio ─────────────────────────────
-// "entregado" es el estado final — saca el servicio de las alertas de entrega
+// ─── Estados de órdenes ───────────────────────────────
 export const ORDER_STAGES = [
   { key: "presupuestado", label: "Presupuestado", color: "#7AA8C4" },
   { key: "en_proceso", label: "En proceso", color: "#C8956C" },
@@ -95,7 +97,7 @@ export const ORDER_STAGES = [
   { key: "entregado", label: "Entregado", color: "#3D8C70" },
 ];
 
-// ─── Configuración por defecto ────────────────────────
+// ─── Configuración ────────────────────────────────────
 export const DEFAULT_CFG = {
   businessName: "Mi Negocio",
   businessAddress: "Ciudad, Provincia",
@@ -108,7 +110,7 @@ export const DEFAULT_CFG = {
   nextInvNum: 1,
 };
 
-// ─── Categorías de gasto por defecto ─────────────────
+// ─── Categorías ───────────────────────────────────────
 export const DEFAULT_CATS = [
   {
     id: "materiales",
@@ -136,6 +138,7 @@ export const EMPTY_CLIENT = {
   color: CLI_COLORS[0],
   internalNote: "",
 };
+
 export const EMPTY_ORDER = {
   productName: "",
   total: "",
@@ -146,18 +149,26 @@ export const EMPTY_ORDER = {
   installments: "",
   costEstimate: "",
 };
+
 export const EMPTY_PAYMENT = {
   date: new Date().toISOString().split("T")[0],
   amount: "",
   method: "efectivo",
   note: "",
 };
+
 export const EMPTY_EXPENSE = {
   date: new Date().toISOString().split("T")[0],
   desc: "",
   amount: "",
 };
-export const EMPTY_CAT = { name: "", icon: "📦", color: "#8B6F9E" };
+
+export const EMPTY_CAT = {
+  name: "",
+  icon: "📦",
+  color: "#8B6F9E",
+};
+
 export const EMPTY_PRODUCT = {
   name: "",
   description: "",
@@ -167,7 +178,13 @@ export const EMPTY_PRODUCT = {
   unit: "unidades",
   minStock: "",
 };
-export const EMPTY_CUSTOM_ITEM = { name: "", notes: "", price: "" };
+
+export const EMPTY_CUSTOM_ITEM = {
+  name: "",
+  notes: "",
+  price: "",
+};
+
 export const EMPTY_SALE = {
   date: new Date().toISOString().split("T")[0],
   productId: "",
@@ -177,7 +194,7 @@ export const EMPTY_SALE = {
   note: "",
 };
 
-// ─── Temas de color predefinidos ─────────────────────
+// ─── Temas ────────────────────────────────────────────
 export const THEMES = [
   { name: "Ámbar cálido", p: "#C8956C", a: "#8B6F9E" },
   { name: "Lavanda", p: "#8B6F9E", a: "#C8956C" },
